@@ -36,7 +36,7 @@ def untag(tagged_sentence):
 
 def gen_corpus(path):
     doc = []
-    with open(path) as file:
+    with open(path, encoding='utf-8') as file:
         for line in file:
             if line[0].isdigit():
                 features = line.split()
@@ -49,10 +49,10 @@ def gen_corpus(path):
                     yield (list(words), list(tags))
                 doc = []
 
-def evaluation(TEST_DATA):
+def evaluation(clf, TEST_DATA):
     y_pred, y_true = [], []
     for words, tags in TEST_DATA:
-        for i, (word, pos) in enumerate(pos_tag(words)):
+        for i, (word, pos) in enumerate(pos_tag(clf, words)):
             y_pred.append(pos)
             y_true.append(tags[i])
     return y_pred, y_true
@@ -66,46 +66,46 @@ def transform_to_dataset(tagged_sentences):
             y.append(tags[index])
     return X, y
 
-def pos_tag(sentence):
+def pos_tag(clf, sentence):
     tags = clf.predict([features(sentence, index) for index in range(len(sentence))])
     return zip(sentence, tags)
 
-#Using Validation dataset
-# tagged_sentences = list(gen_corpus(train_path))
-# cutoff = int(.75 * len(tagged_sentences))
-# training_sentences = tagged_sentences[:cutoff]
-# test_sentences = tagged_sentences[cutoff:]
+def main(train_path, test_path, sents):
+    training_sentences = list(gen_corpus(train_path))
+    test_sentences = list(gen_corpus(test_path))
 
-#Using Test data
-training_sentences = list(gen_corpus(train_path))
-test_sentences = list(gen_corpus(test_path))
+    print (len(training_sentences))   # 14554
+    print (len(test_sentences))    # 298
 
-print (len(training_sentences))   # 14554
-print (len(test_sentences))    # 298
+    X, y = transform_to_dataset(training_sentences)
+    print(len(X)) #  nb_features : 356419
 
-X, y = transform_to_dataset(training_sentences)
-print(len(X)) #  nb_features : 356419
+    clf = Pipeline([
+        ('vectorizer', DictVectorizer(sparse=True)),
+        ('classifier',  LogisticRegression(n_jobs=4, max_iter=100, verbose=True))
+    ])
 
-clf = Pipeline([
-    ('vectorizer', DictVectorizer(sparse=True)),
-    ('classifier',  LogisticRegression(n_jobs=4, max_iter=200, verbose=True))
-])
+    clf.fit(X, y)
 
-clf.fit(X, y)
+    X_test, y_test = transform_to_dataset(test_sentences)
+    print( "Accuracy:", clf.score(X_test, y_test)) # Accuracy: 0.951851851852
 
-X_test, y_test = transform_to_dataset(test_sentences)
-print( "Accuracy:", clf.score(X_test, y_test)) # Accuracy: 0.951851851852
+    # test
 
-# test
-sents = ["Setelah mengamankan YA dan staf serta uang Rp 800 juta, KPK mendatangi kantor Cilegon United Football Club dan mengamankan uang Rp 352 juta",
-         "Warga Desa Kebondalem, Kota Cilegon, Aryo Wibisono, juga menyebutkan Cilegon butuh penanganan khusus dari KPK",
-         "Rossi mampu menjadi pembalap tercepat ketiga di kualifikasi MotoGP Aragon",
-         "Seperti dilansir Calciomercato, Belotti telah berbicara dengan manajemen Il Toro. Pemain berusia 23 tahun itu mempertimbangkan untuk hijrah ke klub London Barat tersebut"]
 
-for s in sents:
-    for w, pos in pos_tag(s.split()):
-        print("%s/%s" % (w, pos), end=' ')
+    for s in sents:
+        for w, pos in pos_tag(clf, s.split()):
+            print("%s/%s" % (w, pos), end=' ')
 
-y_true, y_pred = evaluation(test_sentences)
-for l in classification_report(y_true, y_pred).split('\n'):
-    print(l)
+    y_true, y_pred = evaluation(clf, test_sentences)
+    for l in classification_report(y_true, y_pred).split('\n'):
+        print(l)
+
+if __name__ == '__main__':
+    sents = ["Setelah mengamankan YA dan staf serta uang Rp 800 juta, KPK mendatangi kantor Cilegon United Football Club dan mengamankan uang Rp 352 juta",
+             "Warga Desa Kebondalem, Kota Cilegon, Aryo Wibisono, juga menyebutkan Cilegon butuh penanganan khusus dari KPK",
+             "Rossi mampu menjadi pembalap tercepat ketiga di kualifikasi MotoGP Aragon",
+             "Seperti dilansir Calciomercato, Belotti telah berbicara dengan manajemen Il Toro. Pemain berusia 23 tahun itu mempertimbangkan untuk hijrah ke klub London Barat tersebut"]
+
+    main("dataset/UD_Indonesian/id-ud-train.conllu", "dataset/UD_Indonesian/id-ud-dev.conllu", sents)
+    main("dataset/UD_English/en-ud-train.conllu", "dataset/UD_English/en-ud-dev.conllu", [])

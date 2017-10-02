@@ -6,6 +6,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 
+from nltk.tag.hmm import HiddenMarkovModelTagger
+from nltk.tag.perceptron import PerceptronTagger
+
 train_path = "dataset/UD_Indonesian/id-ud-train.conllu"
 test_path = "dataset/UD_Indonesian/id-ud-dev.conllu"
 
@@ -70,34 +73,62 @@ def pos_tag(clf, sentence):
     tags = clf.predict([features(sentence, index) for index in range(len(sentence))])
     return zip(sentence, tags)
 
-def main(train_path, test_path, sents):
+def logreg(train_path, test_path, sents):
     training_sentences = list(gen_corpus(train_path))
     test_sentences = list(gen_corpus(test_path))
 
-    print (len(training_sentences))   # 14554
-    print (len(test_sentences))    # 298
 
     X, y = transform_to_dataset(training_sentences)
-    print(len(X)) #  nb_features : 356419
 
     clf = Pipeline([
         ('vectorizer', DictVectorizer(sparse=True)),
-        ('classifier',  LogisticRegression(n_jobs=4, max_iter=100, verbose=True))
+        ('classifier',  LogisticRegression())
     ])
 
     clf.fit(X, y)
-
-    X_test, y_test = transform_to_dataset(test_sentences)
-    print( "Accuracy:", clf.score(X_test, y_test)) # Accuracy: 0.951851851852
-
-    # test
-
 
     for s in sents:
         for w, pos in pos_tag(clf, s.split()):
             print("%s/%s" % (w, pos), end=' ')
 
-    y_true, y_pred = evaluation(clf, test_sentences)
+    if sents: print()
+
+    y_pred, y_true = evaluation(clf, test_sentences)
+    for l in classification_report(y_true, y_pred).split('\n'):
+        print(l)
+
+def convert_sents_to_zipped(unzipped_sents):
+    for words, tags in unzipped_sents:
+        yield list(zip(words, tags))
+
+def hmm(train_path, test_path):
+    training_sentences = list(gen_corpus(train_path))
+    test_sentences = list(gen_corpus(test_path))
+
+    hmm_model = HiddenMarkovModelTagger.train(list(convert_sents_to_zipped(training_sentences)))
+
+    # Evaluation
+    y_pred, y_true = [], []
+    for words, tags in test_sentences:
+        y_pred.extend(y for x, y in hmm_model.tag(words))
+        y_true.extend(tags)
+
+    for l in classification_report(y_true, y_pred).split('\n'):
+        print(l)
+
+def ap(train_path, test_path):
+    training_sentences = list(gen_corpus(train_path))
+    test_sentences = list(gen_corpus(test_path))
+
+    ap_model = PerceptronTagger(load=False)
+    ap_model.train(list(convert_sents_to_zipped(training_sentences)))
+
+    # Evaluation
+    y_pred, y_true = [], []
+    for words, tags in test_sentences:
+        y_pred.extend(y for x, y in ap_model.tag(words))
+        y_true.extend(tags)
+
     for l in classification_report(y_true, y_pred).split('\n'):
         print(l)
 
@@ -107,5 +138,20 @@ if __name__ == '__main__':
              "Rossi mampu menjadi pembalap tercepat ketiga di kualifikasi MotoGP Aragon",
              "Seperti dilansir Calciomercato, Belotti telah berbicara dengan manajemen Il Toro. Pemain berusia 23 tahun itu mempertimbangkan untuk hijrah ke klub London Barat tersebut"]
 
-    main("dataset/UD_Indonesian/id-ud-train.conllu", "dataset/UD_Indonesian/id-ud-dev.conllu", sents)
-    main("dataset/UD_English/en-ud-train.conllu", "dataset/UD_English/en-ud-dev.conllu", [])
+    print('# Logistic Regression')
+    print('## Indonesian')
+    logreg("dataset/UD_Indonesian/id-ud-train.conllu", "dataset/UD_Indonesian/id-ud-dev.conllu", [])
+    print('## English')
+    logreg("dataset/UD_English/en-ud-train.conllu", "dataset/UD_English/en-ud-dev.conllu", [])
+
+    print('# Hidden Markov Model')
+    print('## Indonesian')
+    hmm("dataset/UD_Indonesian/id-ud-train.conllu", "dataset/UD_Indonesian/id-ud-dev.conllu")
+    print('## English')
+    hmm("dataset/UD_English/en-ud-train.conllu", "dataset/UD_English/en-ud-dev.conllu")
+
+    print('# Averaged Perceptron')
+    print('## Indonesian')
+    ap("dataset/UD_Indonesian/id-ud-train.conllu", "dataset/UD_Indonesian/id-ud-dev.conllu")
+    print('## English')
+    ap("dataset/UD_English/en-ud-train.conllu", "dataset/UD_English/en-ud-dev.conllu")

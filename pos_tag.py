@@ -1,10 +1,14 @@
 """
 Python script for post tagging learning
 """
+from hashlib import md5
+from os.path import isfile
+
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
+from sklearn.externals import joblib
 
 from nltk.tag.hmm import HiddenMarkovModelTagger
 from nltk.tag.perceptron import PerceptronTagger
@@ -74,18 +78,25 @@ def pos_tag(clf, sentence):
     return zip(sentence, tags)
 
 def logreg(train_path, test_path, sents):
-    training_sentences = list(gen_corpus(train_path))
+    modelref = 'logreg-' + md5(('logreg///' + train_path).encode()).hexdigest() + '.pickle'
+
     test_sentences = list(gen_corpus(test_path))
 
+    if not isfile(modelref):
+        training_sentences = list(gen_corpus(train_path))
+        X, y = transform_to_dataset(training_sentences)
 
-    X, y = transform_to_dataset(training_sentences)
+        clf = Pipeline([
+            ('vectorizer', DictVectorizer(sparse=True)),
+            ('classifier',  LogisticRegression())
+        ])
 
-    clf = Pipeline([
-        ('vectorizer', DictVectorizer(sparse=True)),
-        ('classifier',  LogisticRegression())
-    ])
-
-    clf.fit(X, y)
+        clf.fit(X, y)
+        with open(modelref, 'wb') as wf:
+            joblib.dump(clf, wf)
+    else:
+        with open(modelref, 'rb') as rf:
+            clf = joblib.load(rf)
 
     for s in sents:
         for w, pos in pos_tag(clf, s.split()):
@@ -117,11 +128,20 @@ def hmm(train_path, test_path):
         print(l)
 
 def ap(train_path, test_path):
-    training_sentences = list(gen_corpus(train_path))
+    modelref = 'ap-' + md5(('ap///' + train_path).encode()).hexdigest() + '.pickle'
+
     test_sentences = list(gen_corpus(test_path))
 
-    ap_model = PerceptronTagger(load=False)
-    ap_model.train(list(convert_sents_to_zipped(training_sentences)))
+    if not isfile(modelref):
+        training_sentences = list(gen_corpus(train_path))
+
+        ap_model = PerceptronTagger(load=False)
+        ap_model.train(list(convert_sents_to_zipped(training_sentences)), save_loc=modelref)
+    else:
+        ap_model = PerceptronTagger(load=False)
+        ap_model.load(modelref)
+
+
 
     # Evaluation
     y_pred, y_true = [], []

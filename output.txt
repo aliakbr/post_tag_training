@@ -1,5 +1,7 @@
 # Logistic Regression
 ## Indonesian
+Training took 38236 ms.
+Testing took 683 ms.
              precision    recall  f1-score   support
 
         ADJ       0.82      0.72      0.76       495
@@ -22,6 +24,8 @@
 avg / total       0.93      0.93      0.93     12612
 
 ## English
+Training took 115445 ms.
+Testing took 1366 ms.
              precision    recall  f1-score   support
 
         ADJ       0.90      0.84      0.87      1789
@@ -46,6 +50,8 @@ avg / total       0.93      0.93      0.93     25148
 
 # Hidden Markov Model
 ## Indonesian
+Training took 416 ms.
+Testing took 4739 ms.
              precision    recall  f1-score   support
 
         ADJ       0.61      0.80      0.69       495
@@ -68,6 +74,8 @@ avg / total       0.93      0.93      0.93     25148
 avg / total       0.87      0.86      0.86     12612
 
 ## English
+Training took 888 ms.
+Testing took 7770 ms.
              precision    recall  f1-score   support
 
         ADJ       0.85      0.83      0.84      1789
@@ -92,46 +100,50 @@ avg / total       0.88      0.87      0.87     25148
 
 # Averaged Perceptron
 ## Indonesian
+Training took 28882 ms.
+Testing took 790 ms.
              precision    recall  f1-score   support
 
-        ADJ       0.79      0.71      0.75       495
+        ADJ       0.78      0.72      0.75       495
         ADP       0.96      0.96      0.96      1248
-        ADV       0.83      0.84      0.83       467
-        AUX       0.99      1.00      1.00       104
-      CCONJ       0.98      0.92      0.95       371
-        DET       0.96      0.93      0.95       399
+        ADV       0.84      0.84      0.84       467
+        AUX       1.00      1.00      1.00       104
+      CCONJ       0.98      0.93      0.95       371
+        DET       0.95      0.93      0.94       399
        NOUN       0.88      0.90      0.89      2853
-        NUM       0.93      0.94      0.93       421
-       PART       0.94      0.77      0.85        61
-       PRON       0.99      0.95      0.97       443
-      PROPN       0.91      0.93      0.92      2362
+        NUM       0.94      0.92      0.93       421
+       PART       0.94      0.75      0.84        61
+       PRON       0.99      0.96      0.97       443
+      PROPN       0.91      0.94      0.92      2362
       PUNCT       1.00      1.00      1.00      1936
-      SCONJ       0.83      0.80      0.81       161
-        SYM       1.00      0.93      0.96        42
+      SCONJ       0.84      0.81      0.83       161
+        SYM       1.00      0.90      0.95        42
        VERB       0.91      0.91      0.91      1247
           X       0.00      0.00      0.00         2
 
 avg / total       0.92      0.92      0.92     12612
 
 ## English
+Training took 68401 ms.
+Testing took 1770 ms.
              precision    recall  f1-score   support
 
-        ADJ       0.89      0.87      0.88      1789
+        ADJ       0.90      0.87      0.88      1789
         ADP       0.93      0.97      0.95      2023
-        ADV       0.92      0.86      0.89      1266
-        AUX       0.95      0.98      0.97      1509
+        ADV       0.93      0.86      0.89      1266
+        AUX       0.96      0.98      0.97      1509
       CCONJ       0.99      0.99      0.99       780
         DET       0.98      0.99      0.98      1895
-       INTJ       0.88      0.68      0.76       115
-       NOUN       0.89      0.93      0.91      4197
+       INTJ       0.89      0.71      0.79       115
+       NOUN       0.88      0.93      0.91      4197
         NUM       0.95      0.98      0.97       378
-       PART       0.94      0.97      0.96       630
+       PART       0.94      0.97      0.95       630
        PRON       0.98      0.98      0.98      2218
-      PROPN       0.86      0.86      0.86      1878
+      PROPN       0.87      0.85      0.86      1878
       PUNCT       0.99      1.00      1.00      3083
       SCONJ       0.92      0.82      0.87       402
-        SYM       0.93      0.81      0.86        67
-       VERB       0.94      0.92      0.93      2764
-          X       0.85      0.53      0.65       154
+        SYM       0.96      0.75      0.84        67
+       VERB       0.93      0.92      0.93      2764
+          X       0.87      0.51      0.64       154
 
-avg / total       0.94      0.94      0.94     25148
+avg / total       0.94      0.94      0.93     25148

@@ -3,6 +3,7 @@ Python script for post tagging learning
 """
 from hashlib import md5
 from os.path import isfile
+from time import perf_counter
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
@@ -83,6 +84,7 @@ def logreg(train_path, test_path, sents):
     test_sentences = list(gen_corpus(test_path))
 
     if not isfile(modelref):
+        start = perf_counter()
         training_sentences = list(gen_corpus(train_path))
         X, y = transform_to_dataset(training_sentences)
 
@@ -92,11 +94,15 @@ def logreg(train_path, test_path, sents):
         ])
 
         clf.fit(X, y)
+
+        end = perf_counter()
+        print('Training took {} ms.'.format(int((end - start) * 1000)))
         with open(modelref, 'wb') as wf:
             joblib.dump(clf, wf)
     else:
         with open(modelref, 'rb') as rf:
             clf = joblib.load(rf)
+        print('Model loaded from file.')
 
     for s in sents:
         for w, pos in pos_tag(clf, s.split()):
@@ -104,7 +110,11 @@ def logreg(train_path, test_path, sents):
 
     if sents: print()
 
+    start = perf_counter()
     y_pred, y_true = evaluation(clf, test_sentences)
+    end = perf_counter()
+    print('Testing took {} ms.'.format(int((end - start) * 1000)))
+
     for l in classification_report(y_true, y_pred).split('\n'):
         print(l)
 
@@ -116,13 +126,21 @@ def hmm(train_path, test_path):
     training_sentences = list(gen_corpus(train_path))
     test_sentences = list(gen_corpus(test_path))
 
+    start = perf_counter()
+
     hmm_model = HiddenMarkovModelTagger.train(list(convert_sents_to_zipped(training_sentences)))
 
+    end = perf_counter()
+    print('Training took {} ms.'.format(int((end - start) * 1000)))
+    start = perf_counter()
     # Evaluation
     y_pred, y_true = [], []
     for words, tags in test_sentences:
         y_pred.extend(y for x, y in hmm_model.tag(words))
         y_true.extend(tags)
+
+    end = perf_counter()
+    print('Testing took {} ms.'.format(int((end - start) * 1000)))
 
     for l in classification_report(y_true, y_pred).split('\n'):
         print(l)
@@ -133,21 +151,27 @@ def ap(train_path, test_path):
     test_sentences = list(gen_corpus(test_path))
 
     if not isfile(modelref):
+        start = perf_counter()
         training_sentences = list(gen_corpus(train_path))
 
         ap_model = PerceptronTagger(load=False)
         ap_model.train(list(convert_sents_to_zipped(training_sentences)), save_loc=modelref)
+        end = perf_counter()
+        print('Training took {} ms.'.format(int((end - start) * 1000)))
     else:
         ap_model = PerceptronTagger(load=False)
         ap_model.load(modelref)
-
-
+        print('Model loaded from file.')
 
     # Evaluation
+    start = perf_counter()
     y_pred, y_true = [], []
     for words, tags in test_sentences:
         y_pred.extend(y for x, y in ap_model.tag(words))
         y_true.extend(tags)
+
+    end = perf_counter()
+    print('Testing took {} ms.'.format(int((end - start) * 1000)))
 
     for l in classification_report(y_true, y_pred).split('\n'):
         print(l)
